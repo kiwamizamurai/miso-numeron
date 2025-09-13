@@ -1,0 +1,58 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.3.0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v20
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
+
+      - name: Run lint
+        run: |
+          make lint || true  # Don't fail the build on lint warnings
+
+      - name: Check formatting
+        run: |
+          make format-check || true  # Don't fail the build on formatting issues
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "## Lint Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Run lint and capture output
+          if make lint > lint-output.txt 2>&1; then
+            echo "✅ No lint issues found!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Lint issues found:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat lint-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Format Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check formatting
+          if make format-check > format-output.txt 2>&1; then
+            echo "✅ Code is properly formatted!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Formatting issues found:" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat format-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,0 +1,54 @@
+cabal-version:      2.4
+name:               miso-numeron
+version:            0.1.0.0
+synopsis:           A Numeron (Bulls and Cows) game built with Miso
+description:        A number guessing game where you try to guess a 4-digit number
+license:            MIT
+author:             Your Name
+maintainer:         your.email@example.com
+category:           Game, Web
+build-type:         Simple
+extra-source-files: README.md
+
+executable miso-numeron
+  main-is:             Main.hs
+  other-modules:       Game.Types
+                     , Game.Config
+                     , Game.Number
+                     , Game.State
+                     , Game.Model
+                     , Game.Actions
+                     , Game.Update
+                     , Game.View
+                     , Game.CPU
+                     , Game.Strategy.Level1
+                     , Game.Strategy.Level2
+                     , Game.Strategy.Level3
+  build-depends:       base >=4.12 && <5
+                     , miso
+                     , containers
+                     , random
+                     , text
+                     , mtl
+  
+  -- JSaddle dependencies for development server
+  if !arch(wasm32) && !impl(ghcjs)
+    build-depends:     jsaddle
+                     , jsaddle-warp
+                     , wai-app-static
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+  if impl(ghcjs)
+    ghc-options:       -dedupe
+  if arch(wasm32)
+    ghc-options:       -no-hs-main -optl-mexec-model=reactor -optl-Wl,--export=hs_start
+    cpp-options:       -DWASM
+  if impl(ghcjs)
+    cpp-options:       -DGHCJS_BROWSER
+  default-extensions:  OverloadedStrings
+                     , RecordWildCards
+                     , DeriveGeneric
+                     , DataKinds
+                     , TypeOperators
+                     , LambdaCase
