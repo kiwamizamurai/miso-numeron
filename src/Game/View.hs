@@ -6,21 +6,23 @@ module Game.View
   ) where
 
 import Miso
-import Miso.Html
-import Miso.Html.Property (type_, value_, placeholder_)
+import Miso.Html hiding (style_)
+import Miso.Html.Property (type_, value_, placeholder_, disabled_)
+import qualified Miso.Html as Html
 import Miso.String (ms, MisoString, fromMisoString)
-import Miso.Svg hiding (text)
+import Miso.Svg hiding (text, style_)
 import qualified Miso.Svg as Svg
 import Miso.Svg.Property
 import Data.Text (Text)
 import qualified Data.Text as T
 
-import Game.Types
+import Game.Types hiding (Digit)
 import Game.Config
 import Game.Model
 import Game.Actions
 import Game.Number (formatNumber, allPossibleNumbers)
 import Game.State (possibilities)
+import Game.Input
 
 -- | Main view function
 viewModel :: AppState -> View AppState Action
@@ -97,21 +99,55 @@ messageDisplay msg = div_ [] [text $ ms msg]
 -- | Input section
 inputSection :: AppState -> View model Action
 inputSection AppState{..} = div_ []
-  [ input_
-    [ type_ "text"
-    , value_ (ms currentInput)
-    , onInput (InputChanged . T.pack . fromMisoString)
-    , placeholder_ $ ms $ "Enter " <> T.pack (show $ numberSizeToInt $ numberSize config) <> " digits..."
-    ]
-  , text " "
-  , submitButton
-  , text " "
-  , button_ [onClick ResetGame] [text "🔄 New Game"]
+  [ -- Display current input
+    h2_ []
+      [ text $ case currentInput of
+          Empty -> ms $ "Enter " <> T.pack (show $ numberSizeToInt $ numberSize config) <> " digits"
+          _ -> ms $ "[ " <> inputToText currentInput <> " ]"
+      ]
+  , -- Number pad
+    numberPad currentInput (numberSize config)
+  , -- Action buttons
+    div_ []
+      [ submitButton
+      , text " "
+      , button_ [onClick NumPadClear] [text "🧹 Clear"]
+      , text " "
+      , button_ [onClick NumPadBackspace] [text "⌫ Delete"]
+      , text " "
+      , button_ [onClick ResetGame] [text "🔄 New Game"]
+      ]
   ]
   where
     submitButton = case playerSecret of
       Nothing -> button_ [onClick SetPlayerSecret] [text "🔒 Set Secret"]
       Just _ -> button_ [onClick SubmitGuess] [text "📤 Submit"]
+
+-- | Number pad component
+numberPad :: InputState -> NumberSize -> View model Action
+numberPad inputState numSize = div_ []
+  [ -- First row: 1-3
+    div_ [] [digitButton inputState D1, digitButton inputState D2, digitButton inputState D3]
+  , -- Second row: 4-6
+    div_ [] [digitButton inputState D4, digitButton inputState D5, digitButton inputState D6]
+  , -- Third row: 7-9
+    div_ [] [digitButton inputState D7, digitButton inputState D8, digitButton inputState D9]
+  , -- Fourth row: 0
+    div_ [] [digitButton inputState D0]
+  ]
+
+-- | Individual digit button
+digitButton :: InputState -> Digit -> View model Action
+digitButton inputState digit = 
+  let isUsed = isDigitUsed digit inputState
+      digitText = digitToText digit
+      buttonText = if isUsed
+        then "[" <> digitText <> "]"
+        else " " <> digitText <> " "
+  in button_ 
+    (onClick (if isUsed then NoOp else NumPadDigitClicked digit)
+    : [disabled_ | isUsed])
+    [text $ ms buttonText]
 
 -- | Game board showing both player and CPU guesses
 gameBoard :: AppState -> View model Action
