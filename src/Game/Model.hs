@@ -12,13 +12,14 @@ import Game.Types
 import Game.Config
 import Game.State
 import Game.Number (allPossibleNumbers)
+import Game.Input (InputState(..))
 
 -- | Main application state
 data AppState = AppState
   { config        :: !GameConfig       -- Game configuration (size, level)
   , playerSecret  :: !(Maybe Number)   -- Player's secret number
   , cpuSecret     :: !(Maybe Number)   -- CPU's secret number
-  , currentInput  :: !Text             -- Current input text
+  , currentInput  :: !InputState       -- Current input state
   , playerHistory :: ![GuessHistory]   -- Player's guess history
   , cpuHistory    :: ![GuessHistory]   -- CPU's guess history
   , cpuState      :: !GameState        -- CPU's internal state
@@ -35,7 +36,7 @@ initialState = AppState
   { config = defaultConfig
   , playerSecret = Nothing
   , cpuSecret = Nothing
-  , currentInput = ""
+  , currentInput = Empty
   , playerHistory = []
   , cpuHistory = []
   , cpuState = initGameState (numberSize defaultConfig)

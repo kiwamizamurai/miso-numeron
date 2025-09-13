@@ -21,6 +21,7 @@ executable miso-numeron
                      , Game.Update
                      , Game.View
                      , Game.CPU
+                     , Game.Input
                      , Game.Strategy.Level1
                      , Game.Strategy.Level2
                      , Game.Strategy.Level3

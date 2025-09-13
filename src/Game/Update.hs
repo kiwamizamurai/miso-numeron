@@ -20,6 +20,7 @@ import Game.State
 import Game.Model
 import Game.Actions
 import Game.CPU
+import Game.Input
 import System.Random (randomRIO)
 
 -- | Main update function
@@ -27,11 +28,21 @@ updateModel :: Action -> Transition AppState Action
 updateModel NoOp = pure ()
 
 updateModel (InputChanged input) = do
+  -- Legacy text input handler, now mostly unused
+  pure ()
+
+updateModel (NumPadDigitClicked digit) = do
   s <- get
-  let digitCount = numberSizeToInt (numberSize $ config s)
-      filtered = T.filter (`elem` ("0123456789" :: String)) input
-      limited = T.take digitCount filtered
-  put $ s { currentInput = limited }
+  let newInput = addDigit (numberSize $ config s) digit (currentInput s)
+  put $ s { currentInput = newInput }
+
+updateModel NumPadClear = do
+  s <- get
+  put $ s { currentInput = clearInput (currentInput s) }
+
+updateModel NumPadBackspace = do
+  s <- get
+  put $ s { currentInput = removeLastDigit (currentInput s) }
 
 updateModel SubmitGuess = do
   s <- get
@@ -40,11 +51,11 @@ updateModel SubmitGuess = do
 updateModel SetPlayerSecret = do
   s <- get
   let numSize = numberSize (config s)
-  case parseNumber numSize (T.unpack $ currentInput s) of
+  case getNumber (currentInput s) of
     Nothing -> put $ s { message = "Invalid! Use " <> T.pack (show $ numberSizeToInt numSize) <> " different digits" }
     Just number -> put $ s 
       { playerSecret = Just number
-      , currentInput = ""
+      , currentInput = Empty
       , message = "Your turn! Guess CPU's number"
       }
 
@@ -115,13 +126,13 @@ handleGuess s = do
     Nothing -> updateModel SetPlayerSecret
     Just _ -> do
       let numSize = numberSize (config s)
-      case (parseNumber numSize (T.unpack $ currentInput s), cpuSecret s) of
+      case (getNumber (currentInput s), cpuSecret s) of
         (Just guess, Just secret) -> do
           let hint = calculateHint secret guess
               history = GuessHistory guess hint
               newState = s 
                 { playerHistory = playerHistory s ++ [history]
-                , currentInput = ""
+                , currentInput = Empty
                 }
           
           if isWinning numSize hint
