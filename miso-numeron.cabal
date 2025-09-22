@@ -4,8 +4,8 @@ version:            0.1.0.0
 synopsis:           A Numeron (Bulls and Cows) game built with Miso
 description:        A number guessing game where you try to guess a 4-digit number
 license:            MIT
-author:             Your Name
-maintainer:         your.email@example.com
+author:             kiwamizamurai
+maintainer:         24860100+kiwamizamurai@users.noreply.github.com
 category:           Game, Web
 build-type:         Simple
 extra-source-files: README.md
